@@ -1,2 +1,4 @@
 app.yaml
 .datastore
+run_deploy.sh
+.DS_Store
