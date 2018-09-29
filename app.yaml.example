@@ -1,0 +1,20 @@
+runtime: go
+api_version: go1
+env: standard
+
+handlers:
+- url: /.*
+  script: _go_app
+  login: admin
+
+automatic_scaling:
+  min_idle_instances: automatic
+  max_idle_instances: automatic
+
+env_variables:
+  APP_NAME: ""
+  USER_AGENT: ""
+  TWITTER_ACCESS_TOKEN: ""
+  TWITTER_ACCESS_TOKEN_SECRET: ""
+  TWITTER_CONSUMER_KEY: ""
+  TWITTER_CONSUMER_SECRET: ""

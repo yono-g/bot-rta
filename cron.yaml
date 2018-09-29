@@ -1,0 +1,4 @@
+cron:
+- description: "main task"
+  url: /tasks/main
+  schedule: every 1 hours
