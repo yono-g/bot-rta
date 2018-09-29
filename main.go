@@ -179,11 +179,12 @@ func mainTaskHandler(_ http.ResponseWriter, r *http.Request) {
 
 			printer := message.NewPrinter(language.Japanese)
 			status := printer.Sprintf(
-				"%d回再生 %dコメント %dマイリスト - %s https://nico.ms/%s",
+				"%d回再生 %dコメント %dマイリスト - %s https://nico.ms/%s #%s #ニコニコ動画",
 				video.ViewCounter,
 				video.CommentCounter,
 				video.MylistCounter,
 				video.Title,
+				video.ContentID,
 				video.ContentID,
 			)
 			log.Debugf(ctx, "status: %s", status)
