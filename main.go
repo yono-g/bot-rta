@@ -114,14 +114,16 @@ func mainTaskHandler(_ http.ResponseWriter, r *http.Request) {
 		log.Infof(ctx, "meta: status=%d id=%s totalCount=%d", responseJSON.Meta.Status, responseJSON.Meta.ID, responseJSON.Meta.TotalCount)
 		log.Infof(ctx, "data: count=%d", len(responseJSON.Data))
 
+		var keysToPut []*datastore.Key
+		var videosToPut []Video
+
 		for _, data := range responseJSON.Data {
 			log.Debugf(ctx, "data: contentId=%s", data.ContentID)
-
 			query := datastore.
 				NewQuery("Video").
 				Filter("ContentID =", data.ContentID)
-			var videos []Video
-			keys, err := query.GetAll(ctx, &videos)
+			var videosFiltered []Video
+			keys, err := query.GetAll(ctx, &videosFiltered)
 			if err != nil {
 				panic(err.Error())
 			}
@@ -134,15 +136,17 @@ func mainTaskHandler(_ http.ResponseWriter, r *http.Request) {
 				Format(TimeFormatISO8601)
 			if len(keys) > 0 {
 				key = keys[0]
-				video = Video{Data: data, Tweeted: videos[0].Tweeted, LastUpdated: now}
+				video = Video{Data: data, Tweeted: videosFiltered[0].Tweeted, LastUpdated: now}
 			} else {
 				key = datastore.NewIncompleteKey(ctx, "Video", nil)
 				video = Video{Data: data, Tweeted: "", LastUpdated: now}
 			}
+			keysToPut = append(keysToPut, key)
+			videosToPut = append(videosToPut, video)
+		}
 
-			if _, err := datastore.Put(ctx, key, &video); err != nil {
-				panic(err.Error())
-			}
+		if _, err := datastore.PutMulti(ctx, keysToPut, videosToPut); err != nil {
+			panic(err.Error())
 		}
 	}
 
