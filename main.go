@@ -62,8 +62,6 @@ func init() {
 func mainTaskHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
-	log.Infof(ctx, "/tasks/main start")
-
 	location, _ := time.LoadLocation("Asia/Tokyo")
 
 	twitterAPI := anaconda.NewTwitterApiWithCredentials(
@@ -219,6 +217,4 @@ func mainTaskHandler(_ http.ResponseWriter, r *http.Request) {
 			time.Sleep(SleepDurationInSec * time.Second)
 		}
 	}
-
-	log.Infof(ctx, "/tasks/main end")
 }
