@@ -1,10 +1,7 @@
 package myapp
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
-	"net/url"
 	"os"
 	"time"
 
@@ -16,26 +13,6 @@ import (
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/urlfetch"
 )
-
-type NicovideoAPIResponse struct {
-	Meta Meta   `json:"meta"`
-	Data []Data `json:"data"`
-}
-
-type Meta struct {
-	Status     int    `json:"status"`
-	TotalCount int    `json:"totalCount"`
-	ID         string `json:"id"`
-}
-
-type Data struct {
-	StartTime      string `json:"startTime"`
-	MylistCounter  int    `json:"mylistCounter"`
-	ViewCounter    int    `json:"viewCounter"`
-	ContentID      string `json:"contentID"`
-	Title          string `json:"title"`
-	CommentCounter int    `json:"commentCounter"`
-}
 
 type Video struct {
 	Data
@@ -72,41 +49,16 @@ func mainTaskHandler(_ http.ResponseWriter, r *http.Request) {
 
 	// niconico コンテンツ検索APIを叩いてデータを集める
 	{
-		baseURL := "http://api.search.nicovideo.jp/api/v2/video/contents/search"
-		someDaysAgo := time.Now().
-			In(location).
-			AddDate(0, 0, -periodInDay).
-			Format(timeFormatISO8601)
-		appName := os.Getenv("APP_NAME")
+		nicovideoAPI := NewNicovideoAPIClient(
+			os.Getenv("APP_NAME"),
+			os.Getenv("USER_AGENT"),
+		)
+		nicovideoAPI.HTTPClient.Transport = &urlfetch.Transport{Context: ctx}
 
-		urlValues := url.Values{}
-		urlValues.Add("q", "RTA biim")
-		urlValues.Add("targets", "tags")
-		urlValues.Add("filters[categoryTags][0]", "ゲーム")
-		urlValues.Add("filters[startTime][gte]", someDaysAgo)
-		urlValues.Add("fields", "contentId,title,viewCounter,mylistCounter,commentCounter,startTime")
-		urlValues.Add("_limit", "100")
-		urlValues.Add("_sort", "-viewCounter")
-		urlValues.Add("_context", appName)
-		url := baseURL + "?" + urlValues.Encode()
-		log.Infof(ctx, "request url: %s", url)
-
-		req, _ := http.NewRequest("GET", url, nil)
-		userAgent := os.Getenv("USER_AGENT")
-		if len(userAgent) > 0 {
-			req.Header.Set("User-Agent", userAgent)
-		}
-
-		client := urlfetch.Client(ctx)
-		resp, _ := client.Do(req)
+		req, resp := nicovideoAPI.Get()
+		log.Infof(ctx, "request url: %s", req.URL)
 		log.Infof(ctx, "response status: %s", resp.Status)
-
-		// TODO: ステータスが200以外だった場合の処理
-		// resp.StatusCode != http.StatusOK
-
-		var responseJSON NicovideoAPIResponse
-		bodyBytes, _ := ioutil.ReadAll(resp.Body)
-		json.Unmarshal(bodyBytes, &responseJSON)
+		responseJSON := nicovideoAPI.Parse(resp)
 		log.Infof(ctx, "meta: status=%d id=%s totalCount=%d", responseJSON.Meta.Status, responseJSON.Meta.ID, responseJSON.Meta.TotalCount)
 		log.Infof(ctx, "data: count=%d", len(responseJSON.Data))
 
