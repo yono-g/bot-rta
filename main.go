@@ -17,7 +17,7 @@ import (
 	"google.golang.org/appengine/urlfetch"
 )
 
-type API_Response struct {
+type NicovideoAPIResponse struct {
 	Meta Meta   `json:"meta"`
 	Data []Data `json:"data"`
 }
@@ -43,17 +43,15 @@ type Video struct {
 	LastUpdated string
 }
 
-const TimeFormatISO8601 = "2006-01-02T15:04:05+09:00"
-
-const PeriodInDay = 7
-
-const ViewCounterThreshold = 10000
-const CommentCounterThreshold = 500
-const MylistCounterThreshold = 100
-
-const SleepDurationInSec = 1
-
-const TweetLimitAtSameTime = 3
+const (
+	timeFormatISO8601       = "2006-01-02T15:04:05+09:00"
+	periodInDay             = 7
+	viewCounterThreshold    = 10000
+	commentCounterThreshold = 500
+	mylistCounterThreshold  = 100
+	sleepDurationInSec      = 1
+	tweetLimitAtSameTime    = 3
+)
 
 func init() {
 	http.HandleFunc("/tasks/main", mainTaskHandler)
@@ -77,8 +75,8 @@ func mainTaskHandler(_ http.ResponseWriter, r *http.Request) {
 		baseURL := "http://api.search.nicovideo.jp/api/v2/video/contents/search"
 		someDaysAgo := time.Now().
 			In(location).
-			AddDate(0, 0, -PeriodInDay).
-			Format(TimeFormatISO8601)
+			AddDate(0, 0, -periodInDay).
+			Format(timeFormatISO8601)
 		appName := os.Getenv("APP_NAME")
 
 		urlValues := url.Values{}
@@ -106,7 +104,7 @@ func mainTaskHandler(_ http.ResponseWriter, r *http.Request) {
 		// TODO: ステータスが200以外だった場合の処理
 		// resp.StatusCode != http.StatusOK
 
-		var responseJSON API_Response
+		var responseJSON NicovideoAPIResponse
 		bodyBytes, _ := ioutil.ReadAll(resp.Body)
 		json.Unmarshal(bodyBytes, &responseJSON)
 		log.Infof(ctx, "meta: status=%d id=%s totalCount=%d", responseJSON.Meta.Status, responseJSON.Meta.ID, responseJSON.Meta.TotalCount)
@@ -131,7 +129,7 @@ func mainTaskHandler(_ http.ResponseWriter, r *http.Request) {
 			var video Video
 			now := time.Now().
 				In(location).
-				Format(TimeFormatISO8601)
+				Format(timeFormatISO8601)
 			if len(keys) > 0 {
 				key = keys[0]
 				video = Video{Data: data, Tweeted: videosFiltered[0].Tweeted, LastUpdated: now}
@@ -152,8 +150,8 @@ func mainTaskHandler(_ http.ResponseWriter, r *http.Request) {
 	{
 		startTimeFrom := time.Now().
 			In(location).
-			AddDate(0, 0, -PeriodInDay).
-			Format(TimeFormatISO8601)
+			AddDate(0, 0, -periodInDay).
+			Format(timeFormatISO8601)
 		query := datastore.
 			NewQuery("Video").
 			Filter("StartTime >=", startTimeFrom).
@@ -174,7 +172,7 @@ func mainTaskHandler(_ http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			if video.ViewCounter < ViewCounterThreshold && video.CommentCounter < CommentCounterThreshold && video.MylistCounter < MylistCounterThreshold {
+			if video.ViewCounter < viewCounterThreshold && video.CommentCounter < commentCounterThreshold && video.MylistCounter < mylistCounterThreshold {
 				log.Debugf(ctx, "skip video: contentId=%s viewCounter=%d commentCounter=%d mylistCounter=%d", video.ContentID, video.ViewCounter, video.CommentCounter, video.MylistCounter)
 				continue
 			}
@@ -203,18 +201,18 @@ func mainTaskHandler(_ http.ResponseWriter, r *http.Request) {
 
 			now := time.Now().
 				In(location).
-				Format(TimeFormatISO8601)
+				Format(timeFormatISO8601)
 			video.Tweeted = now
 			video.LastUpdated = now
 			if _, err := datastore.Put(ctx, keys[index], &video); err != nil {
 				panic(err.Error())
 			}
 
-			if tweetCount >= TweetLimitAtSameTime {
+			if tweetCount >= tweetLimitAtSameTime {
 				break
 			}
 
-			time.Sleep(SleepDurationInSec * time.Second)
+			time.Sleep(sleepDurationInSec * time.Second)
 		}
 	}
 }
