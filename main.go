@@ -47,30 +47,38 @@ func mainTaskHandler(_ http.ResponseWriter, r *http.Request) {
 		)
 		nicovideoAPI.HTTPClient.Transport = &urlfetch.Transport{Context: ctx}
 
-		req, resp := nicovideoAPI.Get()
-		log.Infof(ctx, "request url: %s", req.URL)
-		log.Infof(ctx, "response status: %s", resp.Status)
-		responseJSON := nicovideoAPI.Parse(resp)
-		log.Infof(ctx, "meta: status=%d id=%s totalCount=%d", responseJSON.Meta.Status, responseJSON.Meta.ID, responseJSON.Meta.TotalCount)
-		log.Infof(ctx, "data: count=%d", len(responseJSON.Data))
+		var offset int
+		for {
+			req, resp := nicovideoAPI.Get(offset)
+			log.Infof(ctx, "request url: %s", req.URL)
+			log.Infof(ctx, "response status: %s", resp.Status)
 
-		var keysToPut []*datastore.Key
-		var videosToPut []*Video
-		for _, data := range responseJSON.Data {
-			log.Debugf(ctx, "data: contentId=%s", data.ContentID)
-			key, video, err := videoStore.FindByContentID(data.ContentID)
-			if err != nil {
+			responseJSON := nicovideoAPI.Parse(resp)
+			videoCount := len(responseJSON.Data)
+			log.Infof(ctx, "meta: status=%d id=%s totalCount=%d", responseJSON.Meta.Status, responseJSON.Meta.ID, responseJSON.Meta.TotalCount)
+			log.Infof(ctx, "data: count=%d", videoCount)
+
+			var keysToPut []*datastore.Key
+			var videosToPut []*Video
+			for _, data := range responseJSON.Data {
+				log.Debugf(ctx, "data: contentId=%s", data.ContentID)
+				key, video, err := videoStore.FindOrNew(data.ContentID)
+				if err != nil {
+					panic(err.Error())
+				}
+				video.Data = data
+
+				keysToPut = append(keysToPut, key)
+				videosToPut = append(videosToPut, video)
+			}
+			if _, err := videoStore.ExecPutMulti(keysToPut, videosToPut); err != nil {
 				panic(err.Error())
 			}
-			if key == nil {
-				key = videoStore.NewKey()
-				video = &Video{Data: data}
+
+			offset += videoCount
+			if offset >= responseJSON.Meta.TotalCount {
+				break
 			}
-			keysToPut = append(keysToPut, key)
-			videosToPut = append(videosToPut, video)
-		}
-		if _, err := videoStore.ExecPutMulti(keysToPut, videosToPut); err != nil {
-			panic(err.Error())
 		}
 	}
 

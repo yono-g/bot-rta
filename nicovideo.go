@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 )
 
@@ -48,7 +49,7 @@ func NewNicovideoAPIClient(appName string, userAgent string) *NicovideoAPIClient
 	}
 }
 
-func (c *NicovideoAPIClient) Get() (*http.Request, *http.Response) {
+func (c *NicovideoAPIClient) Get(offset int) (*http.Request, *http.Response) {
 	location, _ := time.LoadLocation("Asia/Tokyo")
 	sevenDaysAgo := time.Now().
 		In(location).
@@ -62,6 +63,7 @@ func (c *NicovideoAPIClient) Get() (*http.Request, *http.Response) {
 	urlValues.Add("filters[startTime][gte]", sevenDaysAgo)
 	urlValues.Add("fields", "contentId,title,viewCounter,mylistCounter,commentCounter,startTime")
 	urlValues.Add("_limit", "100")
+	urlValues.Add("_offset", strconv.Itoa(offset))
 	urlValues.Add("_sort", "-viewCounter")
 	urlValues.Add("_context", c.appName)
 	url := baseURL + "?" + urlValues.Encode()

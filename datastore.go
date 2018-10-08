@@ -25,7 +25,7 @@ func NewVideoStore(context context.Context) *VideoStore {
 	}
 }
 
-func (s *VideoStore) FindByContentID(contentID string) (*datastore.Key, *Video, error) {
+func (s *VideoStore) FindOrNew(contentID string) (*datastore.Key, *Video, error) {
 	var videos []Video
 	query := datastore.
 		NewQuery(s.kindName).
@@ -36,8 +36,10 @@ func (s *VideoStore) FindByContentID(contentID string) (*datastore.Key, *Video, 
 	}
 
 	if len(keys) < 1 {
-		return nil, nil, nil
+		newKey := datastore.NewIncompleteKey(s.context, s.kindName, nil)
+		return newKey, &Video{}, nil
 	}
+
 	return keys[0], &videos[0], nil
 }
 
@@ -58,10 +60,6 @@ func (s *VideoStore) FindRecent() ([]*datastore.Key, *[]Video, error) {
 		return nil, nil, err
 	}
 	return keys, &videos, nil
-}
-
-func (s *VideoStore) NewKey() *datastore.Key {
-	return datastore.NewIncompleteKey(s.context, s.kindName, nil)
 }
 
 func (s *VideoStore) ExecPut(key *datastore.Key, video *Video) (*datastore.Key, error) {
