@@ -1,4 +1,4 @@
-package myapp
+package tasks
 
 import (
 	"net/http"
@@ -12,6 +12,8 @@ import (
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/urlfetch"
+
+	"yono.test/bot-rta/app"
 )
 
 const (
@@ -22,11 +24,7 @@ const (
 	tweetLimitAtSameTime    = 3
 )
 
-func init() {
-	http.HandleFunc("/tasks/main", mainTaskHandler)
-}
-
-func mainTaskHandler(_ http.ResponseWriter, r *http.Request) {
+func MainTask(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	twitterAPI := anaconda.NewTwitterApiWithCredentials(
@@ -37,11 +35,11 @@ func mainTaskHandler(_ http.ResponseWriter, r *http.Request) {
 	)
 	twitterAPI.HttpClient.Transport = &urlfetch.Transport{Context: ctx}
 
-	videoStore := NewVideoStore(ctx)
+	videoStore := app.NewVideoStore(ctx)
 
 	// niconico コンテンツ検索APIを叩いてデータを集める
 	{
-		nicovideoAPI := NewNicovideoAPIClient(
+		nicovideoAPI := app.NewNicovideoAPIClient(
 			os.Getenv("APP_NAME"),
 			os.Getenv("USER_AGENT"),
 		)
@@ -59,7 +57,7 @@ func mainTaskHandler(_ http.ResponseWriter, r *http.Request) {
 			log.Infof(ctx, "data: count=%d", videoCount)
 
 			var keysToPut []*datastore.Key
-			var videosToPut []*Video
+			var videosToPut []*app.Video
 			for _, data := range responseJSON.Data {
 				log.Debugf(ctx, "data: contentId=%s", data.ContentID)
 				key, video, err := videoStore.FindOrNew(data.ContentID)

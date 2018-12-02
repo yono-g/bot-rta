@@ -1,4 +1,5 @@
 app.yaml
-.datastore
+.local-datastore.bin
 run_deploy.sh
 .DS_Store
+vendor/
