@@ -27,14 +27,6 @@ const (
 func MainTask(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
-	twitterAPI := anaconda.NewTwitterApiWithCredentials(
-		os.Getenv("TWITTER_ACCESS_TOKEN"),
-		os.Getenv("TWITTER_ACCESS_TOKEN_SECRET"),
-		os.Getenv("TWITTER_CONSUMER_KEY"),
-		os.Getenv("TWITTER_CONSUMER_SECRET"),
-	)
-	twitterAPI.HttpClient.Transport = &urlfetch.Transport{Context: ctx}
-
 	videoStore := app.NewVideoStore(ctx)
 
 	// niconico コンテンツ検索APIを叩いてデータを集める
@@ -114,7 +106,14 @@ func MainTask(_ http.ResponseWriter, r *http.Request) {
 			log.Debugf(ctx, "status: %s", status)
 
 			if !appengine.IsDevAppServer() {
-				// In production
+				twitterAPI := anaconda.NewTwitterApiWithCredentials(
+					os.Getenv("TWITTER_ACCESS_TOKEN"),
+					os.Getenv("TWITTER_ACCESS_TOKEN_SECRET"),
+					os.Getenv("TWITTER_CONSUMER_KEY"),
+					os.Getenv("TWITTER_CONSUMER_SECRET"),
+				)
+				twitterAPI.HttpClient.Transport = &urlfetch.Transport{Context: ctx}
+
 				tweet, err := twitterAPI.PostTweet(status, nil)
 				if err != nil {
 					panic(err.Error())
