@@ -74,13 +74,16 @@ func MainTask(_ http.ResponseWriter, r *http.Request) {
 
 	// 結果を集計してツイートする
 	{
-		keys, videos, err := videoStore.FindRecent()
+		location, _ := time.LoadLocation("Asia/Tokyo")
+		sevenDaysAgo := time.Now().
+			In(location).
+			AddDate(0, 0, -7)
+		keys, videos, err := videoStore.FindRecent(sevenDaysAgo)
 		if err != nil {
 			panic(err.Error())
 		}
 		log.Debugf(ctx, "query result: count=%d", len(keys))
 
-		location, _ := time.LoadLocation("Asia/Tokyo")
 		tweetCount := 0
 		for index, video := range *videos {
 			if len(video.Tweeted) > 0 {

@@ -43,15 +43,10 @@ func (s *VideoStore) FindOrNew(contentID string) (*datastore.Key, *Video, error)
 	return keys[0], &videos[0], nil
 }
 
-func (s *VideoStore) FindRecent() ([]*datastore.Key, *[]Video, error) {
-	location, _ := time.LoadLocation("Asia/Tokyo")
-	sevenDaysAgo := time.Now().
-		In(location).
-		AddDate(0, 0, -7).
-		Format("2006-01-02T15:04:05+09:00")
+func (s *VideoStore) FindRecent(fromTime time.Time) ([]*datastore.Key, *[]Video, error) {
 	query := datastore.
 		NewQuery(s.kindName).
-		Filter("StartTime >=", sevenDaysAgo).
+		Filter("StartTime >=", fromTime).
 		Order("StartTime")
 
 	var videos []Video
