@@ -13,7 +13,7 @@ import (
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/urlfetch"
 
-	"yono.test/bot-rta/app"
+	"github.com/yono-g/bot-rta/app"
 )
 
 const (
@@ -24,7 +24,12 @@ const (
 	tweetLimitAtSameTime    = 3
 )
 
-func MainTask(_ http.ResponseWriter, r *http.Request) {
+func MainTask(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("X-Appengine-Cron") != "true" {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	ctx := appengine.NewContext(r)
 
 	videoStore := app.NewVideoStore(ctx)

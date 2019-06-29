@@ -3,9 +3,12 @@ package main
 import (
 	"net/http"
 
-	"yono.test/bot-rta/app/tasks"
+	"github.com/yono-g/bot-rta/app/tasks"
+	"google.golang.org/appengine"
 )
 
-func init() {
+func main() {
 	http.HandleFunc("/tasks/main", tasks.MainTask)
+
+	appengine.Main()
 }

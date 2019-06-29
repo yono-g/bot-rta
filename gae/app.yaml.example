@@ -1,11 +1,8 @@
-runtime: go
-api_version: go1
-env: standard
+runtime: go111
 
 handlers:
 - url: /.*
-  script: _go_app
-  login: admin
+  script: auto
 
 automatic_scaling:
   min_idle_instances: automatic
