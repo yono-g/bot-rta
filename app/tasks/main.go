@@ -56,7 +56,7 @@ func MainTask(w http.ResponseWriter, r *http.Request) {
 			var keysToPut []*datastore.Key
 			var videosToPut []*app.Video
 			for _, data := range responseJSON.Data {
-				log.Debugf(ctx, "data: contentId=%s", data.ContentID)
+				log.Debugf(ctx, "data: contentId=%s title=%s viewCounter=%d commentCounter=%d mylistCounter=%d startTime=%s", data.ContentID, data.Title, data.ViewCounter, data.CommentCounter, data.MylistCounter, data.StartTime)
 				key, video, err := videoStore.FindOrNew(data.ContentID)
 				if err != nil {
 					panic(err.Error())
