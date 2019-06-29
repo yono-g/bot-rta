@@ -20,7 +20,7 @@ type VideoStore struct {
 
 func NewVideoStore(context context.Context) *VideoStore {
 	return &VideoStore{
-		kindName: "video",
+		kindName: "Video",
 		context:  context,
 	}
 }
