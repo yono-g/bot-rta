@@ -46,7 +46,7 @@ func (s *VideoStore) FindOrNew(contentID string) (*datastore.Key, *Video, error)
 func (s *VideoStore) FindRecent(fromTime time.Time) ([]*datastore.Key, *[]Video, error) {
 	query := datastore.
 		NewQuery(s.kindName).
-		Filter("StartTime >=", fromTime).
+		Filter("StartTime >=", fromTime.Format("2006-01-02T15:04:05+09:00")).
 		Order("StartTime")
 
 	var videos []Video
