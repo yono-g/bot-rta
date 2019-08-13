@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  dev:
+    build: ./
+    volumes:
+      - .:/go/src/github.com/yono-g/bot-rta
+    working_dir: /go/src/github.com/yono-g/bot-rta
+    ports:
+      - "8000:8000"
+      - "8080:8080"
+    command: >
+      dev_appserver.py
+      --host 0.0.0.0
+      --admin_host 0.0.0.0
+      gae/
